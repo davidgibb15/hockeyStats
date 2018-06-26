@@ -6,7 +6,9 @@ RSpec.describe CumulativeGame, type: :model do
 	present_attributes.each do |attribute|
 		it { should validate_presence_of(attribute) }
 	end
-	it {should belong_to :team}
+
+	it { should belong_to :team }
+	it { should belong_to :player }
 
 	it "is valid with valid attributes" do
 		expect(create(:cumulative_game)).to be_valid
