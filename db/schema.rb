@@ -40,6 +40,7 @@ ActiveRecord::Schema.define(version: 2018_06_24_082444) do
     t.integer "tka"
     t.integer "fow"
     t.integer "fot"
+    t.integer "gp"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["opponent_team_id"], name: "index_cumulative_games_on_opponent_team_id"

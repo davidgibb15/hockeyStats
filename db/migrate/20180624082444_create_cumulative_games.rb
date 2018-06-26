@@ -25,6 +25,7 @@ class CreateCumulativeGames < ActiveRecord::Migration[5.2]
       t.integer :tka
       t.integer :fow
       t.integer :fot
+      t.integer :gp
 
       t.timestamps
     end
