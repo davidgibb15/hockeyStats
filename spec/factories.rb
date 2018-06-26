@@ -37,7 +37,8 @@ FactoryBot.define do
       	tka 0
       	fow 0
       	fot 0
-
+        gp 1
+        
       	association :player
       	association :team
       	association :opponent_team, factory: :team
