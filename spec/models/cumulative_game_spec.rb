@@ -15,14 +15,25 @@ RSpec.describe CumulativeGame, type: :model do
 	end
 
 	it "is not valid with more ppg and shg then goals" do
-		c_game = create(:cumulative_game)
-		c_game.ppg = 2
+		c_game = build(:cumulative_game, ppg: 2)
 		expect(c_game).to_not be_valid
 	end
 
 	it "is not valid with more ppa and sha then assists" do
-		c_game = create(:cumulative_game)
-		c_game.sha = 2
+		c_game = build(:cumulative_game, sha: 2)
 		expect(c_game).to_not be_valid
+	end
+
+	increasing_attributes = ["date", "goals", "assists", "hits", "blocks", "shots", "pim", "ppg", "ppa", "shg", "sha", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot"]
+	increasing_attributes.each do |attribute|
+		it "a players game has a #{attribute} greater or equal to than his previous game" do
+			game1 = create(:cumulative_game)
+			game1.send("#{attribute}=", game1.send("#{attribute}")+1)
+			game1.save
+			game2 = build(:cumulative_game, gp: 2, player: game1.player)
+			game2.date = game1.date + 1
+
+			expect(game2).to_not be_valid
+		end
 	end
 end

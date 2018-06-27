@@ -11,29 +11,30 @@ when "development"
 	team2 = Team.create({name: "Prince George Cougars", division: "NWBC"})
 	player = Player.create({name: "Charlie Barktowski", team_id: team.id, lw: true, rw: true, c: true, d: true, g: true, age: 9})
 	CumulativeGame.create(player_id: player.id) do |cGame|
-      cGame.date = Date.new(2001,2,3)
-      cGame.home = true
-      cGame.team_id = team.id
-      cGame.opponent_team_id = team2.id
-      cGame.goals = 1
-      cGame.assists = 1
-      cGame.hits = 2
-      cGame.blocks = 4
-      cGame.shots = 5
-      cGame.pim = 0
-      cGame.ppg = 0
-      cGame.ppa = 1
-      cGame.shg = 1
-      cGame.sha = 0
-      cGame.gwg = 1
-      cGame.otg = 1
-      cGame.plus_minus = 2
-      cGame.toi = 1200
-      cGame.mss = 2
-      cGame.gva = 1
-      cGame.tka = 3
-      cGame.fow = 1
-      cGame.fot = 2
+            cGame.date = Date.new(2001,2,3)
+            cGame.home = true
+            cGame.team_id = team.id
+            cGame.opponent_team_id = team2.id
+            cGame.goals = 1
+            cGame.assists = 1
+            cGame.hits = 2
+            cGame.blocks = 4
+            cGame.shots = 5
+            cGame.pim = 0
+            cGame.ppg = 0
+            cGame.ppa = 1
+            cGame.shg = 1
+            cGame.sha = 0
+            cGame.gwg = 1
+            cGame.otg = 1
+            cGame.plus_minus = 2
+            cGame.toi = 1200
+            cGame.mss = 2
+            cGame.gva = 1
+            cGame.tka = 3
+            cGame.fow = 1
+            cGame.fot = 2
+            cGame.gp = 1
 	end
 when "production"
 end
