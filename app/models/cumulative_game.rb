@@ -18,7 +18,83 @@ class CumulativeGame < ApplicationRecord
   end
 
   def stats_go_up
-  	#get last game stats for player
-  	#make sure they go up
+  	if(gp.present? and gp > 1)
+  		last_game = CumulativeGame.where(player: player, gp: gp - 1).limit(1)[0]
+  		if(last_game.date >= date)
+  			errors.add(:date, "date cannot be less than previous game")
+  		end
+
+  		if(last_game.goals > goals)
+  			errors.add(:goal, "goals cannot be less than previous game")
+  		end
+
+  		if(last_game.assists > assists)
+  			errors.add(:assists, "assists cannot be less than previous game")
+  		end
+
+  		if(last_game.hits > hits)
+  			errors.add(:hits, "hits cannot be less than previous game")
+  		end
+
+  		if(last_game.blocks > blocks)
+  			errors.add(:blocks, "blocks cannot be less than previous game")
+  		end
+
+  		if(last_game.shots > shots)
+  			errors.add(:shots, "shots cannot be less than previous game")
+  		end
+
+  		if(last_game.pim > pim)
+  			errors.add(:pim, "pim cannot be less than previous game")
+  		end
+
+  		if(last_game.ppg > ppg)
+  			errors.add(:ppg, "ppg cannot be less than previous game")
+  		end
+
+  		if(last_game.ppa > ppa)
+  			errors.add(:ppa, "ppa cannot be less than previous game")
+  		end
+
+   		if(last_game.shg >= shg)
+  			errors.add(:shg, "shg cannot be less than previous game")
+  		end
+
+  		if(last_game.sha > sha)
+  			errors.add(:sha, "sha cannot be less than previous game")
+  		end
+
+  		if(last_game.gwg > gwg)
+  			errors.add(:gwg, "gwg cannot be less than previous game")
+  		end
+
+  		if(last_game.otg > otg)
+  			errors.add(:otg, "otg cannot be less than previous game")
+  		end
+
+  		if(last_game.toi > toi)
+  			errors.add(:toi, "toi cannot be less than previous game")
+  		end
+
+  		if(last_game.mss > mss)
+  			errors.add(:gva, "gva cannot be less than previous game")
+  		end
+
+  		if(last_game.tka > tka)
+  			errors.add(:tka, "tka cannot be less than previous game")
+  		end
+
+  		if(last_game.tka > tka)
+  			errors.add(:tka, "tka cannot be less than previous game")
+  		end
+
+  		if(last_game.fow > fow)
+  			errors.add(:fow, "ppa cannot be less than previous game")
+  		end
+
+  		if(last_game.fot > fot)
+  			errors.add(:fow, "ppa cannot be less than previous game")
+  		end
+  	end
   end
 end
