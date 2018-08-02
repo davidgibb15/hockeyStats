@@ -97,4 +97,37 @@ class CumulativeGame < ApplicationRecord
   		end
   	end
   end
+
+  def self.get_games(categories, num_games_ago)
+  	categories= categories.join(", ")
+  	result=ActiveRecord::Base.connection.execute("SELECT #{categories} FROM (SELECT ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY gp DESC) as r, cumulative_games.* FROM cumulative_games ) x WHERE x.r =#{num_games_ago+1} or x.r=1 ORDER BY player_id")
+  end
+
+  def self.get_range_totals(categories, num_games_ago)
+  	all_games = get_games(categories, num_games_ago).to_a
+  	all_games.to_a.sort_by!{|game| [game["player_id"], game["gp"]]}
+  	all_players_stats_in_range = []
+  	previous_game = {"player_id": -1}
+  	all_games.each_with_index do |game, i|
+  		if game["player_id"] == previous_game["player_id"]
+  			all_players_stats_in_range << calculate_range_stats(previous_game, game, categories)
+  		elsif i == all_games.length - 1 || game["player_id"] != all_games[i+1]["player_id"]
+  			all_players_stats_in_range << game
+  		end
+  		previous_game = game
+  	end
+  	all_players_stats_in_range
+  end
+
+  private
+
+  def self.calculate_range_stats(cumulative_total_beginning, cumulative_total_end, queried_categories)
+  	valid_calculatable_categories = ["goals", "assists", "hits", "blocks", "shots", "pim", "ppg", "ppa", "shg", "sha", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "gp"]
+  	calculatable_categories = queried_categories & valid_calculatable_categories
+  	calculatable_categories.each do |category|
+  		cumulative_total_end[category] = cumulative_total_end[category] - cumulative_total_beginning[category]
+  	end
+  	cumulative_total_end
+  end 
+
 end
