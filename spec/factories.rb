@@ -11,13 +11,11 @@ FactoryBot.define do
      	c true
     	d false
     	g false
-    	age 34
 		association :team
 	end
 
 	factory :cumulative_game do
 		date Date.new(2001,2,3)
-      	home true
       	goals 0
       	assists 0
       	hits 0
@@ -40,7 +38,6 @@ FactoryBot.define do
         gp 1
         
       	association :player
-      	association :team
-      	association :opponent_team, factory: :team
+
 	end
 end

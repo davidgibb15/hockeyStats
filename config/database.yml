@@ -24,6 +24,7 @@ default: &default
 development:
   <<: *default
   database: hockeyStats_development
+  host: localhost
   username: <%= ENV['DATABASE_USERNAME'] %> 
   password: <%= ENV['DATABASE_PASSWORD'] %>
 

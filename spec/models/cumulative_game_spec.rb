@@ -22,12 +22,11 @@ end
 
 RSpec.describe CumulativeGame, type: :model do
 
-	present_attributes = [:player, :date, :home, :team, :opponent_team, :goals, :assists, :hits, :blocks, :shots, :pim, :ppg, :ppa, :shg, :sha, :gwg, :otg, :plus_minus, :toi, :mss, :gva, :tka, :fow, :fot, :gp]
+	present_attributes = [:player, :date, :goals, :assists, :hits, :blocks, :shots, :pim, :ppg, :ppa, :shg, :sha, :gwg, :otg, :plus_minus, :toi, :mss, :gva, :tka, :fow, :fot, :gp]
 	present_attributes.each do |attribute|
 		it { should validate_presence_of(attribute) }
 	end
 
-	it { should belong_to :team }
 	it { should belong_to :player }
 
 	it "is valid with valid attributes" do
@@ -51,8 +50,7 @@ RSpec.describe CumulativeGame, type: :model do
 			game1.send("#{attribute}=", game1.send("#{attribute}")+1)
 			game1.save
 			game2 = build(:cumulative_game, gp: 2, player: game1.player)
-			game2.date = game1.date + 1
-
+			game2.date = game1.date - 1
 			expect(game2).to_not be_valid
 		end
 	end
@@ -97,7 +95,7 @@ RSpec.describe CumulativeGame, type: :model do
 		player3 = player_with_games("player3", 1)
 		player4 = player_with_games("player4", 5)
 		
-		range_totals = described_class.get_range_totals(["goals", "player_id", "gp"], 10)
+		range_totals = described_class.get_raw_range_totals(["goals", "player_id", "gp"], 10)
 
 		expect(range_totals.any?{|h| h["player_id"] == player1.id and h["goals"] == 18}).to be true
 		expect(range_totals.any?{|h| h["player_id"] == player2.id and h["goals"] == 20}).to be true
@@ -107,7 +105,7 @@ RSpec.describe CumulativeGame, type: :model do
 
 	it "can calculate range stats" do
 		player1 = player_with_games("player1", 10)
-		categories = ["goals", "player_id", "gp", "assists"]
+		categories = ["goals", "player_id", "gp", "assists", "name"]
 		games_1_10 = described_class.get_games(categories,9).to_a
 		games_3_10 = described_class.get_games(categories,7).to_a
 		cgame = CumulativeGame.new
@@ -117,6 +115,18 @@ RSpec.describe CumulativeGame, type: :model do
 		expect range_stats_3_10["goals"] == 14
 		expect range_stats_3_10["gp"] == 7
 		expect range_stats_1_10["gp"] == 9
+	end
+
+	it "can calculate averages" do
+		player1 = player_with_games("player1", 10)
+		player2 = player_with_games("player2", 2)
+		player3 = player_with_games("player3", 3)
+
+		stats = described_class.get_raw_range_totals(["goals", "player_id", "gp", "assists", "name"], 9)
+		described_class.average(stats, ["goals", "assists", "gp"])
+		expect(stats.any?{|s| s["name"] == "player1" and s["goals"] ==2.0}).to be true
+		expect(stats.any?{|s| s["name"] == "player2" and s["assists"] ==1.0}).to be true
+		expect(stats.any?{|s| s["name"] == "player3" and s["goals"] ==4.0/3}).to be true
 	end
 
 end
