@@ -1,0 +1,16 @@
+<%= form_with url: stats_path, method: :get do |f| %>
+  <p>
+    <%= f.label :categories %><br />
+    <% for category in ["goals", "assists", "points", "shots", "blocks", "hits", "pim", "ppg", "ppa", "ppp", "shg", "sha", "shp", "gwg", "plus_minus", "toi", "fow", "fol", "fot", "gva", "tka"] %>
+    	<%= h category %>
+      	<%= check_box_tag 'categories[]', category%>
+    <% end %>
+  </p>
+  <div class="actions" id="myBtn">
+    <%= f.submit %>
+  </div>
+<% end %>
+
+<div>
+	<%= render 'table' %>
+</div>

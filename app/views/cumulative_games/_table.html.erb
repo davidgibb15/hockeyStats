@@ -1,0 +1,24 @@
+<table>
+	<th>
+		<% @categories.each do |stat| %>
+			<td><%= stat %></td>
+		<% end %>
+		<td>Score</td>
+	</th>
+	<% @stats.each do |player| %>
+		<tr>
+			<td>
+				<%= "#{player["name"]}  #{player["gp"]}" %>
+			</td>
+			<% @categories.each do |stat| %>
+				<td>
+					<%= player[stat].round(2) %>
+				</td>
+			<% end %>
+			<td>
+				<%= player["score"].round(2) %>
+			</td>
+
+		</tr>
+	<% end %>
+</table>

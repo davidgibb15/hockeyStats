@@ -94,7 +94,7 @@ class CumulativeGame < ApplicationRecord
 
   def self.get_games(categories, num_games)
   	categories= categories.join(", ")
-    categories << ", player_id, name"
+    categories << ", player_id, name, gp"
   	result=ActiveRecord::Base.connection.execute("SELECT #{categories} FROM (SELECT ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY gp DESC) as r, cumulative_games.*, name FROM cumulative_games LEFT JOIN players ON players.id = cumulative_games.player_id) x WHERE x.r =#{num_games+1} or x.r=1 ORDER BY player_id")
   end 
 
@@ -116,22 +116,24 @@ class CumulativeGame < ApplicationRecord
 
   def self.get_normalized_stats(categories, num_games)
     raw_stats = get_raw_range_totals(categories, num_games)
-    binding.pry
+    
     normalized_stats = normalize_stats(raw_stats, categories, num_games)
     add_total_score(normalized_stats, categories)
+    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
   end
 
   def self.get_normalized_average_stats(categories, num_games)
     raw_stats = get_raw_range_totals(categories, num_games)
     average_stats(raw_stats, categories)
-    normalized_stats = normalize_stats(average_stats, categories)
+    normalized_stats = normalize_stats(raw_stats, categories)
     add_total_score(normalized_stats, categories)
+    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
   end
 
   private
 
   def self.calculate_range_stats(cumulative_total_beginning, cumulative_total_end, queried_categories)
-  	valid_calculatable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "gp"]
+  	valid_calculatable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus" "gp"]
   	calculatable_categories = queried_categories & valid_calculatable_categories
   	calculatable_categories.each do |category|
   		cumulative_total_end[category] = cumulative_total_end[category] - cumulative_total_beginning[category]
@@ -140,7 +142,7 @@ class CumulativeGame < ApplicationRecord
   end
 
   def self.average_stats(raw_stats, queried_categories)
-    valid_averagable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol"]
+    valid_averagable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus"]
     present_averagable_categories = queried_categories & valid_averagable_categories
     raw_stats.each do |stat_line|
       gp = stat_line["gp"]
@@ -151,7 +153,7 @@ class CumulativeGame < ApplicationRecord
   end
 
   def self.normalize_stats(raw_stats, queried_categories, num_games = 1)
-    valid_normalizable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol"]
+    valid_normalizable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus"]
     present_normalizable_categories = valid_normalizable_categories & queried_categories
     raw_stats.each do |stat_line|
       present_normalizable_categories.each do |category|
@@ -161,13 +163,14 @@ class CumulativeGame < ApplicationRecord
   end
 
   def self.add_total_score(stats, queried_categories)
-    valid_scorable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol"]
+    valid_scorable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus"]
     present_scorable_categories = queried_categories & valid_scorable_categories
     stats.each do |stat_line|
       score = 0
       present_scorable_categories.each do |category|
         score = score + stat_line[category]
       end
+      score = score/present_scorable_categories.length*100
       stat_line["score"] = score
     end
   end
