@@ -39,10 +39,7 @@ def get_i_games
 	uri = URI(url)
 	response = Net::HTTP.get(uri)
 	full_games=[]
-	i=0
-	JSON.parse(response)['data'].length
 	JSON.parse(response)['data'].each do |stat_line|
-		i = i+1
 		game = {}
 		id = stat_line["gameId"]
 		playerId = stat_line["playerId"]
@@ -60,7 +57,20 @@ def get_i_games
 		end
 		full_games << matching_game[0].merge(game)
 	end
+	#http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=core&isGame=true&reportName=skaterscoring&cayenneExp=gameDate>="2017-10-04" and gameDate<="2018-04-09" and gameTypeId=2
+	url = 
+	uri = URI(url)
+	response = Net::HTTP.get(uri)
+	full_games = []
+	i = 0
+	JSON.parse(rseponse)['data'].each do |stat_line|
+		game = {}
+		id = stat_line[gameId]
+		playerId = stat_line["playerId"]
+		game[:primary_assists] = stat_line[""]
+		game[:secondary_assists] = stat_line[""]
 
+	end
 	File.open("igames.json","w") do |f|
   		f.write(full_games.to_json)
 	end

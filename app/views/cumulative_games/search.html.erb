@@ -4,6 +4,7 @@
     <% for category in ["goals", "assists", "points", "shots", "blocks", "hits", "pim", "ppg", "ppa", "ppp", "shg", "sha", "shp", "gwg", "plus_minus", "toi", "fow", "fol", "fot", "gva", "tka"] %>
     	<%= h category %>
       	<%= check_box_tag 'categories[]', category%>
+        <%= number_field_tag 'weights[]', nil, step: 0.01 %>
     <% end %>
   </p>
   <div class="actions" id="myBtn">

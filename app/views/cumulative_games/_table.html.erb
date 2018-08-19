@@ -1,14 +1,23 @@
-<table>
-	<th>
+<table id="myTable" class="tablesorter tablesorter-blue">
+	<thead>
+	<tr>
+		<th> Rank </th>
+		<th> Name </th>
+		<th> gp </th>
 		<% @categories.each do |stat| %>
-			<td><%= stat %></td>
+			<th><%= stat %></th>
 		<% end %>
-		<td>Score</td>
-	</th>
-	<% @stats.each do |player| %>
+		<th>Score</th>
+	</tr>
+</thead>
+	<% @stats.each_with_index do |player, i| %>
 		<tr>
+			<td> <%=i+1 %></td>
 			<td>
-				<%= "#{player["name"]}  #{player["gp"]}" %>
+				<%= player["name"] %>
+			</td>
+			<td>
+				<%= player["gp"] %>
 			</td>
 			<% @categories.each do |stat| %>
 				<td>

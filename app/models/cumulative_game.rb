@@ -92,14 +92,103 @@ class CumulativeGame < ApplicationRecord
   	end
   end
 
-  def self.get_games(categories, num_games)
+  def self.execute_sql(*sql_array)     
+    ActiveRecord::Base.connection.execute(send(:sanitize_sql_array, sql_array))
+  end
+
+  def self.calculate_age_date(age)
+    Date.today.years_ago(age)
+  end
+
+  def self.get_games(categories, num_games, filters)
+    query_string = 
+      "SELECT #{categories} FROM 
+      (SELECT ROW_NUMBER() 
+        OVER (PARTITION BY player_id 
+          ORDER BY gp DESC) as r, 
+          cumulative_games.*, name, birth_date 
+          FROM cumulative_games 
+          LEFT JOIN players ON players.id = cumulative_games.player_id"
+    args = [] 
+
+    unless filters.empty?
+      query_string = query_string + " WHERE"
+      where_started = false
+
+      if filters.key?(:age)
+        query_string = query_string + "( players.birth_date <= ? AND players.birth_date >= ?)"
+        where_started = true
+        args << calculate_age_date(filters[:age][0])
+        args << calculate_age_date(filters[:age][1])
+      end
+
+      if filters.key?(:include_players)
+        if where_started
+          query_string = query_string + " AND"
+        end
+        query_string = query_string + " ("
+        filters[:include_players].each_with_index do |player_id, i|
+          unless i == 0
+            query_string = query_string + " OR "
+          end
+          query_string = query_string + "cumulative_games.player_id = ?"
+          args << player_id
+        end
+        query_string = query_string + ")"
+        where_started = true
+      elsif filters.key?(:exclude_players)
+        if where_started
+          query_string = query_string + " AND"
+        end
+        query_string = query_string + " ("
+        filters[:exclude_players].each_with_index do |player_id, i|
+          unless i == 0
+            query_string = query_string + " OR "
+          end
+          query_string = query_string + "cumulative_games.player_id != ?"
+          args << player_id
+        end
+        query_string = query_string + ")"
+        where_started = true
+      end
+
+      #if filters.key?("include_teams")
+        #query_string = query_string + ""
+      #end
+
+      #if filter.key?("positions")
+        #query_string = query_string + ""
+      #end
+    end
+    query_string = query_string + ") x 
+      WHERE x.r =#{num_games+1} 
+      or x.r=1 
+      ORDER BY player_id"
+    execute_sql(query_string, *args)
+  end
+
+  def self.get_games_old(categories, num_games, filters = {})
   	categories= categories.join(", ")
     categories << ", player_id, name, gp"
-  	result=ActiveRecord::Base.connection.execute("SELECT #{categories} FROM (SELECT ROW_NUMBER() OVER (PARTITION BY player_id ORDER BY gp DESC) as r, cumulative_games.*, name FROM cumulative_games LEFT JOIN players ON players.id = cumulative_games.player_id) x WHERE x.r =#{num_games+1} or x.r=1 ORDER BY player_id")
+    #the inner select selects all the stats and name from all players most recent and nth most recent game
+    result=execute_sql(
+      "SELECT #{categories} FROM 
+        (SELECT 
+          ROW_NUMBER() OVER 
+          (PARTITION BY player_id 
+            ORDER BY gp DESC
+          ) as r, 
+          cumulative_games.*, name 
+          FROM cumulative_games 
+          LEFT JOIN players ON players.id = cumulative_games.player_id
+        ) x 
+      WHERE x.r =#{num_games+1} 
+      or x.r=1 
+      ORDER BY player_id")
   end 
 
   def self.get_raw_range_totals(categories, num_games)
-  	all_games = get_games(categories, num_games).to_a
+  	all_games = get_games_old(categories, num_games).to_a
   	all_games.to_a.sort_by!{|game| [game["player_id"], game["gp"]]}
   	all_players_stats_in_range = []
   	previous_game = {"player_id": -1}
@@ -114,23 +203,29 @@ class CumulativeGame < ApplicationRecord
   	all_players_stats_in_range
   end
 
-  def self.get_normalized_stats(categories, num_games)
+  def self.get_normalized_stats(categories, weights, num_games, min_games)
     raw_stats = get_raw_range_totals(categories, num_games)
     
-    normalized_stats = normalize_stats(raw_stats, categories, num_games)
+    normalized_stats = normalize_stats(raw_stats, categories, weights, num_games)
     add_total_score(normalized_stats, categories)
     normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
   end
 
-  def self.get_normalized_average_stats(categories, num_games)
+  def self.get_normalized_average_stats(categories, weights, num_games, min_games)
     raw_stats = get_raw_range_totals(categories, num_games)
+    filter_out_low_games_player(raw_stats, min_games)
     average_stats(raw_stats, categories)
-    normalized_stats = normalize_stats(raw_stats, categories)
+    normalized_stats = normalize_stats(raw_stats, categories, weights)
     add_total_score(normalized_stats, categories)
     normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
+
   end
 
   private
+
+  def self.filter_out_low_games_player(stats, min_games)
+    stats.reject!{ |k| k["gp"] < min_games}
+  end
 
   def self.calculate_range_stats(cumulative_total_beginning, cumulative_total_end, queried_categories)
   	valid_calculatable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus" "gp"]
@@ -152,12 +247,13 @@ class CumulativeGame < ApplicationRecord
     end
   end
 
-  def self.normalize_stats(raw_stats, queried_categories, num_games = 1)
+  def self.normalize_stats(raw_stats, queried_categories, weights, num_games = 1)
     valid_normalizable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus"]
     present_normalizable_categories = valid_normalizable_categories & queried_categories
     raw_stats.each do |stat_line|
       present_normalizable_categories.each do |category|
         stat_line[category] = (stat_line[category].to_f - MINS[category]*num_games)/((MAXES[category]-MINS[category])*num_games)
+        stat_line[category] = stat_line[category] * weights[category]
       end
     end
   end
@@ -170,7 +266,6 @@ class CumulativeGame < ApplicationRecord
       present_scorable_categories.each do |category|
         score = score + stat_line[category]
       end
-      score = score/present_scorable_categories.length*100
       stat_line["score"] = score
     end
   end
