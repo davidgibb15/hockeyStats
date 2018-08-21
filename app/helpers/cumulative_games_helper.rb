@@ -1,0 +1,2 @@
+module CumulativeGamesHelper
+end

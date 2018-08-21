@@ -17,20 +17,21 @@ ActiveRecord::Schema.define(version: 2018_06_24_082444) do
 
   create_table "cumulative_games", force: :cascade do |t|
     t.bigint "player_id"
+    t.string "nhl_id"
     t.date "date"
-    t.boolean "home"
-    t.bigint "team_id"
-    t.bigint "opponent_team_id"
     t.integer "goals"
     t.integer "assists"
     t.integer "hits"
     t.integer "blocks"
     t.integer "shots"
+    t.integer "points"
     t.integer "pim"
     t.integer "ppg"
     t.integer "ppa"
+    t.integer "ppp"
     t.integer "shg"
     t.integer "sha"
+    t.integer "shp"
     t.integer "gwg"
     t.integer "otg"
     t.integer "plus_minus"
@@ -40,23 +41,20 @@ ActiveRecord::Schema.define(version: 2018_06_24_082444) do
     t.integer "tka"
     t.integer "fow"
     t.integer "fot"
+    t.integer "fol"
     t.integer "gp"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["opponent_team_id"], name: "index_cumulative_games_on_opponent_team_id"
     t.index ["player_id"], name: "index_cumulative_games_on_player_id"
-    t.index ["team_id"], name: "index_cumulative_games_on_team_id"
   end
 
   create_table "players", force: :cascade do |t|
     t.string "name"
-    t.boolean "lw"
-    t.boolean "rw"
-    t.boolean "c"
-    t.boolean "d"
-    t.boolean "g"
+    t.string "nhl_id"
+    t.date "birth_date"
+    t.integer "years_in_league"
+    t.string "position"
     t.bigint "team_id"
-    t.integer "age"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["team_id"], name: "index_players_on_team_id"
@@ -70,6 +68,5 @@ ActiveRecord::Schema.define(version: 2018_06_24_082444) do
   end
 
   add_foreign_key "cumulative_games", "players"
-  add_foreign_key "cumulative_games", "teams"
   add_foreign_key "players", "teams"
 end
