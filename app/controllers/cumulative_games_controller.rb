@@ -9,7 +9,49 @@ class CumulativeGamesController < ApplicationController
   	
   	min_games = 5
 
-  	@stats=CumulativeGame.get_normalized_average_stats(@categories, @weights, 82, min_games)
+    filters = {}
+    unless (params["data1"].nil? or params["data2"].nil?) or (params["data1"] == "" and params["data2"] == "")
+      min_age = 
+        if params["data1"] == ""
+          18
+        else
+          params["data1"].to_i
+        end
+      max_age = 
+        if params["data2"] == ""
+          50
+        else
+          params["data2"].to_i
+        end
+      filters[:age] = [min_age, max_age]
+    end
+
+    unless (params["data3"].nil? or params["data4"].nil?) or (params["data3"] == "" and params["data4"] == "")
+      min_years = 
+        if params["data3"] == ""
+          0
+        else
+          params["data3"].to_i
+        end
+      max_years = 
+        if params["data4"] == ""
+          27
+        else
+          params["data4"].to_i
+        end
+      filters[:years_in_league] = [min_years, max_years]
+    end
+
+    unless params["positions"].nil?
+      filters[:positions] = []
+      params["positions"].each do |position|
+        filters[:positions] << position
+      end
+    end
+    puts filters
+    puts '_--------------------------'
+
+  	@stats=CumulativeGame.get_normalized_average_stats(@categories, @weights, 82, min_games, filters)
   end
 
   private

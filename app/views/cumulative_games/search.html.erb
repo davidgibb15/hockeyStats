@@ -1,12 +1,34 @@
 <%= form_with url: stats_path, method: :get do |f| %>
-  <p>
     <%= f.label :categories %><br />
-    <% for category in ["goals", "assists", "points", "shots", "blocks", "hits", "pim", "ppg", "ppa", "ppp", "shg", "sha", "shp", "gwg", "plus_minus", "toi", "fow", "fol", "fot", "gva", "tka"] %>
-    	<%= h category %>
-      	<%= check_box_tag 'categories[]', category%>
-        <%= number_field_tag 'weights[]', nil, step: 0.01 %>
-    <% end %>
-  </p>
+      <% for category in ["goals", "assists", "points", "shots", "blocks", "hits", "pim", "ppg", "ppa", "ppp", "shg", "sha", "shp", "gwg", "plus_minus", "toi", "fow", "fol", "fot", "gva", "tka"] %>
+        <span class="category_input">
+          <%= h category %>
+      	  <%= check_box_tag 'categories[]', category%>
+          <%= number_field_tag 'weights[]', nil, step: 0.01 %>
+        </span>
+      <% end %>
+    <%= f.hidden_field :data1 %>
+    <%= f.hidden_field :data2 %>
+    <%= f.hidden_field :data3 %>
+    <%= f.hidden_field :data4 %>
+  <div id="range">
+    Age Range: <span id="min-range"></span>-<span id="max-range"></span>
+  </div>
+  <div id="age_slider"></div>
+  <div id="range_2">
+    Years In League: <span id="min-years"></span>-<span id="max-years"></span>
+  </div>
+  <div id="years_slider"></div>
+  <div id="positions">
+    C
+    <%= check_box_tag 'positions[]', 'C'%>
+    RW
+    <%= check_box_tag 'positions[]', 'RW'%>
+    LW
+    <%= check_box_tag 'positions[]', 'LW'%>
+    D
+    <%= check_box_tag 'positions[]', 'D'%>
+  </div>
   <div class="actions" id="myBtn">
     <%= f.submit %>
   </div>

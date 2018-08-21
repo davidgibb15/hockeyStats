@@ -87,7 +87,7 @@ def get_players
 	puts nhl_player_ids.count
 	players = []
 	nhl_player_ids.each do |id|
-		sleep 1
+		sleep 0.1
 		player = {}
 		url = "https://statsapi.web.nhl.com/api/v1/people/#{id}?expand=person.stats&stats=yearByYear,careerRegularSeason"
 		uri = URI(url)
@@ -118,6 +118,7 @@ def get_players
 		if player[:years_in_league] == 0
 			puts "#{id} has 0 years in league"
 		end
+		player[:position] = data['primaryPosition']['abbreviation']
 		players << player
 	end
 
@@ -150,7 +151,8 @@ def create_players
 			nhl_id: player["nhl_id"],
 			birth_date: player["birth_date"],
 			years_in_league: player["years_in_league"],
-			team: team)
+			team: team,
+			position: player["position"])
 	end
 end
 
@@ -201,4 +203,7 @@ def create_c_games
 	end
 end
 
+get_players
+create_teams
+create_players
 create_c_games

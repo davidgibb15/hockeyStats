@@ -5,11 +5,7 @@ class CreatePlayers < ActiveRecord::Migration[5.2]
       t.string :nhl_id
       t.date :birth_date
       t.integer :years_in_league
-      t.boolean :lw
-      t.boolean :rw
-      t.boolean :c
-      t.boolean :d
-      t.boolean :g
+      t.string :position
       t.references :team, foreign_key: true
 
       t.timestamps

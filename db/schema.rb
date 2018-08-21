@@ -53,11 +53,7 @@ ActiveRecord::Schema.define(version: 2018_06_24_082444) do
     t.string "nhl_id"
     t.date "birth_date"
     t.integer "years_in_league"
-    t.boolean "lw"
-    t.boolean "rw"
-    t.boolean "c"
-    t.boolean "d"
-    t.boolean "g"
+    t.string "position"
     t.bigint "team_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false

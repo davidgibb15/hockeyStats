@@ -1,5 +1,4 @@
 $(document).ready ->
-  console.log("hello")
   $ ->
     $.extend $.tablesorter.defaults,
       widgets: [
