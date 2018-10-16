@@ -5,7 +5,11 @@ require 'pry'
 require 'active_record'
 require_relative "../config/environment.rb"
 def get_i_games
+<<<<<<< HEAD
 	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=skatersummary&cayenneExp=gameDate>=\"2018-09-09\" and gameDate<=\"2019-10-28\" and gameTypeId=2"
+=======
+	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=skatersummary&cayenneExp=gameDate>=\"2016-09-09\" and gameDate<=\"2017-07-07\" and gameTypeId=2"
+>>>>>>> commit stuff
 	uri = URI(url)
 
 	response = Net::HTTP.get(uri)
@@ -35,10 +39,15 @@ def get_i_games
 		games <<  game
 	end
 
+<<<<<<< HEAD
 	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=realtime&cayenneExp=gameDate>=\"2018-09-09\" and gameDate<=\"2019-10-28\" and gameTypeId=2"
+=======
+	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=realtime&cayenneExp=gameDate>=\"2016-09-09\" and gameDate<=\"2017-07-07\" and gameTypeId=2"
+>>>>>>> commit stuff
 	uri = URI(url)
 	response = Net::HTTP.get(uri)
 	full_games=[]
+	puts JSON.parse(response)['data'].count
 	JSON.parse(response)['data'].each do |stat_line|
 		game = {}
 		id = stat_line["gameId"]
@@ -58,6 +67,7 @@ def get_i_games
 		full_games << matching_game[0].merge(game)
 	end
 	#http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=core&isGame=true&reportName=skaterscoring&cayenneExp=gameDate>="2017-10-04" and gameDate<="2018-04-09" and gameTypeId=2
+<<<<<<< HEAD
 	url = 
 	uri = URI(url)
 	response = Net::HTTP.get(uri)
@@ -69,20 +79,23 @@ def get_i_games
 		playerId = stat_line["playerId"]
 		game[:primary_assists] = stat_line[""]
 		game[:secondary_assists] = stat_line[""]
+=======
+>>>>>>> commit stuff
 
-	end
-	File.open("igames.json","w") do |f|
+	File.open("igames1617.json","w") do |f|
   		f.write(full_games.to_json)
 	end
 
 end
 
 def get_players
-	file = File.read('igames.json')
+	file = File.read('igames1617.json')
 	igames = JSON.parse(file)
 	nhl_player_ids = Set[]
 	igames.each do |igame|
-		nhl_player_ids << igame["nhl_player_id"]
+		if !Player.find_by(nhl_id: igame["nhl_id"]).present?
+			nhl_player_ids << igame["nhl_player_id"]
+		end
 	end
 	puts nhl_player_ids.count
 	players = []
@@ -122,7 +135,7 @@ def get_players
 		players << player
 	end
 
-	File.open("players.json","w") do |f|
+	File.open("players1617.json","w") do |f|
   		f.write(players.to_json)
 	end
 end
@@ -142,9 +155,10 @@ end
 
 def create_players
 	puts "creating players"
-	file = File.read("players.json")
+	file = File.read("players1617.json")
 	players = JSON.parse(file)
 	players.each do |player|
+		
 		team = Team.find_by(name: player["team"])
 		Player.create(
 			name: player["name"],
@@ -158,7 +172,7 @@ end
 
 def create_c_games
 	puts "creating c_games"
-	file = File.read("igames.json")
+	file = File.read("igames1617.json")
 	player_gp = {}
 	Player.all.each do |player|
 		player_gp[player["nhl_id"]] = 0
@@ -204,6 +218,3 @@ def create_c_games
 end
 get_i_games
 get_players
-create_teams
-create_players
-create_c_games

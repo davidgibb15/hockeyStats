@@ -1,1 +1,13 @@
 $("table").replaceWith("<%= j render 'table' %>");
+$(document).ready(function() { 
+    $("table").tablesorter(); 
+    $("#ajax-append").click(function() { 
+         $.get("assets/ajax-content.html", function(html) { 
+             // append the "ajax'd" data to the table body 
+             $("table tbody").append(html); 
+            // let the plugin know that we made a update 
+            $("table").trigger("update"); 
+        }); 
+        return false; 
+    }); 
+});

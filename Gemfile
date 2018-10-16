@@ -25,6 +25,8 @@ gem 'jbuilder', '~> 2.5'
 gem 'jquery-rails'
 gem 'jquery-tablesorter'
 gem 'jquery-ui-rails'
+gem 'oauth2'
+gem 'oauth'
 # Use Redis adapter to run Action Cable in production
 # gem 'redis', '~> 4.0'
 # Use ActiveModel has_secure_password
