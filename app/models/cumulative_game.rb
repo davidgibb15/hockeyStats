@@ -101,15 +101,17 @@ class CumulativeGame < ApplicationRecord
   end
 
   def self.get_games(categories, num_games, filters)
+    puts '*************************************'
+    puts num_games
     categories= categories.join(", ")
-    categories << ", player_id, name, gp"
+    categories << ", player_id, name, gp, yahoo_lw, yahoo_rw, yahoo_c, yahoo_d"
 
     query_string = 
-      "SELECT #{categories} FROM 
+      "SELECT * FROM 
       (SELECT ROW_NUMBER() 
         OVER (PARTITION BY player_id 
           ORDER BY gp DESC) as r, 
-          cumulative_games.*, name, birth_date 
+          cumulative_games.*, name, birth_date, yahoo_lw, yahoo_d, yahoo_c, yahoo_rw 
           FROM cumulative_games 
           LEFT JOIN players ON players.id = cumulative_games.player_id"
     args = [] 
@@ -124,7 +126,14 @@ class CumulativeGame < ApplicationRecord
         args << calculate_age_date(filters[:age][0])
         args << calculate_age_date(filters[:age][1]+1)
       end
-
+=begin
+      if filters.key?(:date)
+        if where_started
+          query_string = query_string + " AND"
+        end
+        query_string = query_string + "( cumulative_games.date <= '2018-05-05' AND cumulative_games.date >= '2018-01-01')"
+      end
+=end
       if filters.key?(:include_players)
         if where_started
           query_string = query_string + " AND"
@@ -184,6 +193,29 @@ class CumulativeGame < ApplicationRecord
         args << filters[:years_in_league][1]
         where_started = true
       end
+
+      if filters.key?(:yahoo_positions)
+        if where_started
+          query_string = query_string + " AND"
+        end
+        query_string = query_string + " ("
+        filters[:yahoo_positions].each_with_index do |position, i|
+          unless i == 0
+            query_string = query_string + " OR "
+          end
+          query_string = query_string + "players.yahoo_#{position} = true"
+        end
+        query_string = query_string + ")"
+        where_started = true        
+      end
+
+      if filters.key?(:exclude_players)
+        if where_started
+          query_string = query_string + " AND (players.id NOT IN (?))"
+          args << filters[:exclude_players]
+        end
+
+      end
     end
     query_string = query_string + ") x 
       WHERE x.r =#{num_games+1} 
@@ -196,8 +228,8 @@ class CumulativeGame < ApplicationRecord
   	categories= categories.join(", ")
     categories << ", player_id, name, gp"
     #the inner select selects all the stats and name from all players most recent and nth most recent game
-    result=execute_sql(
-      "SELECT #{categories} FROM 
+    result=CumulativeGame.execute_sql(
+      "SELECT * FROM 
         (SELECT 
           ROW_NUMBER() OVER 
           (PARTITION BY player_id 
@@ -207,7 +239,7 @@ class CumulativeGame < ApplicationRecord
           FROM cumulative_games 
           LEFT JOIN players ON players.id = cumulative_games.player_id
         ) x 
-      WHERE x.r =#{num_games+1} 
+      WHERE x.r =11
       or x.r=1 
       ORDER BY player_id")
   end 
@@ -215,10 +247,12 @@ class CumulativeGame < ApplicationRecord
   def self.get_raw_range_totals(categories, num_games, filters)
   	all_games = get_games(categories, num_games, filters).to_a
   	all_games.to_a.sort_by!{|game| [game["player_id"], game["gp"]]}
+
   	all_players_stats_in_range = []
   	previous_game = {"player_id": -1}
   	all_games.each_with_index do |game, i|
-  		if game["player_id"] == previous_game[:player_id]
+
+  		if game["player_id"] == previous_game["player_id"]
   			all_players_stats_in_range << calculate_range_stats(previous_game, game, categories)
   		elsif i == all_games.length - 1 || game["player_id"] != all_games[i+1]["player_id"]
   			all_players_stats_in_range << game
@@ -228,34 +262,47 @@ class CumulativeGame < ApplicationRecord
   	all_players_stats_in_range
   end
 
-  def self.get_normalized_stats(categories, weights, num_games, min_games)
-    raw_stats = get_raw_range_totals(categories, num_games)
-    
+  def self.get_normalized_stats(categories, weights, num_games, min_games, filters)
+    puts 'total'
+    raw_stats = get_raw_range_totals(categories, num_games, filters)
     normalized_stats = normalize_stats(raw_stats, categories, weights, num_games)
     add_total_score(normalized_stats, categories)
     normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
+    serialize_positions(normalized_stats)
   end
 
   def self.get_normalized_average_stats(categories, weights, num_games, min_games, filters)
+    puts 'average'
     raw_stats = get_raw_range_totals(categories, num_games, filters)
     filter_out_low_games_player(raw_stats, min_games)
     average_stats(raw_stats, categories)
     normalized_stats = normalize_stats(raw_stats, categories, weights)
     add_total_score(normalized_stats, categories)
     normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
-
+    serialize_positions(normalized_stats)
   end
 
   private
-
+  def self.serialize_positions(stats)
+    stats.each do |player|
+      position_string=""
+      position_string = position_string + "LW " if player["yahoo_lw"]
+      position_string = position_string + "RW " if player["yahoo_rw"]
+      position_string = position_string + "C " if player["yahoo_c"]
+      position_string = position_string + "D " if player["yahoo_d"]
+      player["positions"] = position_string
+    end
+    stats
+  end
   def self.filter_out_low_games_player(stats, min_games)
     stats.reject!{ |k| k["gp"] < min_games}
   end
 
   def self.calculate_range_stats(cumulative_total_beginning, cumulative_total_end, queried_categories)
-  	valid_calculatable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus" "gp"]
+  	valid_calculatable_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus", "gp"]
   	calculatable_categories = queried_categories & valid_calculatable_categories
-  	calculatable_categories.each do |category|
+  	calculatable_categories << "gp"
+    calculatable_categories.each do |category|
   		cumulative_total_end[category] = cumulative_total_end[category] - cumulative_total_beginning[category]
   	end
   	cumulative_total_end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_06_24_082444) do
+ActiveRecord::Schema.define(version: 2018_08_24_072728) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -57,6 +57,12 @@ ActiveRecord::Schema.define(version: 2018_06_24_082444) do
     t.bigint "team_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "yahoo_lw"
+    t.boolean "yahoo_rw"
+    t.boolean "yahoo_c"
+    t.boolean "yahoo_d"
+    t.boolean "yahoo_g"
+    t.string "yahoo_id"
     t.index ["team_id"], name: "index_players_on_team_id"
   end
 

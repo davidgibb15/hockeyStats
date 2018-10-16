@@ -3,7 +3,9 @@
 	<tr>
 		<th> Rank </th>
 		<th> Name </th>
-		<th> gp </th>
+		<th> GP </th>
+		<th> Positions </th>
+		<th> Age </th>
 		<% @categories.each do |stat| %>
 			<th><%= stat %></th>
 		<% end %>
@@ -19,8 +21,20 @@
 			<td>
 				<%= player["gp"] %>
 			</td>
+			<td>
+				<%= player["positions"] %>
+			</td>
+			<td>
+				<%= player["birth_date"] %>
+			</td>
 			<% @categories.each do |stat| %>
-				<td>
+				<% if player[stat] < 0.25 %>
+				 	<td class="bad_stat"> 
+				<% elsif player[stat] < 0.75 %>
+					 <td class="ok_stat"> 
+				<% else %>
+					 <td class="good_stat">
+				<% end %>
 					<%= player[stat].round(2) %>
 				</td>
 			<% end %>
