@@ -16,36 +16,110 @@
  *= require_self
  */
 
-#years_slider, #age_slider{
-	width: 100px;
+input[type="number"]{
+  width: 40px;
+  margin-left: 5px;
+  border-radius: 4px;
+  -moz-appearance: textfield;
 }
-.ui-slider .ui-slider-handle {
-    height: 15px;
-    width: 2px;
-    padding-left: 10px; //add this
+.stat-select input[type="number"]{
+
+  float: right;
 }
-#weights_{
-	width: 25px;
+.stat-select input[type="checkbox"]{
+  vertical-align: bottom;
+  float: left;
 }
-#num_games{
-    width: 25px;
+div.statContainer{
+  border: 1px solid #d3d3d3;
+  padding: 6px 6px 8px 6px;
+  border-radius: 4px;
+  width: 150px;
+  background-color: lavender;
+  margin-bottom: 2px;
+   
 }
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+.multiselect-container{
+  width: 50%;
+  float: right;
 }
- 
-input[type="number"] {
-    -moz-appearance: textfield;
+.filters{
+  width: 50%;
+  float: left
+}
+.filters-container{
+  
+  width: 600px;
+  margin: 0 auto;
+}
+.statColumn{
+  display: inline-block;
+  vertical-align: top;
+  
+}
+.statColumn:not(:first-child) {
+    margin-left: 12px;
+}
+.searchForm{
+  text-align: center;
+  
+}
+.stat-select{
+  margin: 0 auto;
+  padding: 20px;
+  display: inline-block;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px 0;
+  background-color: aquamarine;
+}
+.stat-select button{
+  vertical-align: bottom;
+  padding: 6px;
+  border-radius: 4px;
+  background-color: pink;
+  border: 1px solid;
+  font-weight: 800;
+}
+button.dropdown{
+  background-color: blue;
+  border: 1px solid;
+  padding: 4px 6px 4px 6px;
+  
+}
+i.arrow {
+    border: solid black;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    
+     
+   margin-left: 4px;
+}
+i.arrow.down{
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+}
+i.arrow.up{
+  transform: rotate(-135deg);
+    -webkit-transform: rotate(-135deg);
+}
+.invisible{
+  display:none;
+}
+.filters-container{
+  overflow: hidden;
+  border: 1px solid
 }
 
-.bad_stat{
-	background-color: #ff6961 !important;
+.selected,
+.unselected{
+  list-style: none;
 }
-.ok_stat{
-	background-color: #FFFF99 !important;
+.selected-wrapper{
+  width: 50%;
+  float: right;
 }
-.good_stat{
-	background-color: #CCFFBB !important;
+.unselected-wrapper{
+  width: 50%;
+  float: left
 }
