@@ -64,7 +64,7 @@ class SearchForm extends React.Component {
     }));
   }
   handleSearch = () => {
-    fetch('api/v1/search/search')
+    fetch('api/v1/search/search?categories[]=goals&categories[]=assists')
       .then((response) => {return response.json()})
       .then((data) => {this.setState({players_stats: data})})
   }
@@ -161,6 +161,12 @@ class SearchForm extends React.Component {
     return (
       <div>
       <form className="searchForm">
+        <button 
+          type='button'
+          onClick = {this.handleSearch}
+          className="dropdown">
+          press me!
+        </button>
         <div className="stat-select">
           {rows.map((row, i) => (
             <span key={i} className="statColumn">
