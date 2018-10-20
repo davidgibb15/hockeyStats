@@ -107,7 +107,7 @@ class CumulativeGame < ApplicationRecord
     categories << ", player_id, name, gp, yahoo_lw, yahoo_rw, yahoo_c, yahoo_d"
 
     query_string = 
-      "SELECT * FROM 
+      "SELECT goals, assists, shots, blocks, hits, pim, ppp, gwg, plus_minus, player_id, name, gp, yahoo_lw, yahoo_rw, yahoo_c, yahoo_d FROM 
       (SELECT ROW_NUMBER() 
         OVER (PARTITION BY player_id 
           ORDER BY gp DESC) as r, 
