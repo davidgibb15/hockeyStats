@@ -66,7 +66,6 @@ class Api::V1::SearchController < ApplicationController
     else
       CumulativeGame.get_normalized_stats(@categories, @weights, num_games, min_games, filters)
     end
-    binding.pry
     render json: @stats
   end
 
