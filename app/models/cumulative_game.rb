@@ -101,8 +101,7 @@ class CumulativeGame < ApplicationRecord
   end
 
   def self.get_games(categories, num_games, filters)
-    puts '*************************************'
-    puts num_games
+
     categories= categories.join(", ")
     categories << ", player_id, name, gp, yahoo_lw, yahoo_rw, yahoo_c, yahoo_d"
 

@@ -5,7 +5,7 @@ import PlayersStatsRow from "./PlayersStatsRow"
 class PlayersStatsTable extends React.Component {
   state = { 
     data: this.props.players,
-    lastSorted: null
+    lastSorted: null,
   }
   componentWillReceiveProps(nextProps){
     if(nextProps.players!== this.props.players){
@@ -31,9 +31,9 @@ class PlayersStatsTable extends React.Component {
     return(
       <table>
         <thead>
-          <PlayerHeadersRow headerNames= {Object.keys(this.state.data[0])} onClickFunction={this.handleClick}/>
+          <PlayerHeadersRow categories={this.props.categories} headerNames= {Object.keys(this.state.data[0])} onClickFunction={this.handleClick}/>
         </thead>
-        <tbody>{this.state.data.map(player => <PlayersStatsRow key={player.name} {...player} />)}</tbody>    
+        <tbody>{this.state.data.map(player => <PlayersStatsRow key={player.name} {...player} categories={values} />)}</tbody>    
       </table>
     );
   }
