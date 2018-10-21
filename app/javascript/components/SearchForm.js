@@ -24,6 +24,19 @@ class SearchForm extends React.Component {
       {name: 'RW', checked: true},
       {name: 'D', checked: true}
     ],
+    displayed_categories: [
+      {text: 'Name', value: 'name'},
+      {text: 'Goals', value: 'goals'},
+      {text: 'Assists', value: 'assists'},
+      {text: 'Shots', value: 'shots'},
+      {text: 'Blocks', value: 'blocks'},
+      {text: 'Hits', value: 'hits'},
+      {text: 'PIM', value: 'pim'},
+      {text: 'PPP', value: 'ppp'},
+      {text: 'GWG', value: 'gwg'},
+      {text: '+-', value: 'plus_minus'},
+      {text: 'Rating', value: 'score'}
+    ],
     categories: [
       {value: 'goalsCB', text: 'Goals', weight: 1, checked: true},
       {value: 'assistsCB', text: 'Assists', weight: 1, checked: true},
@@ -210,7 +223,7 @@ class SearchForm extends React.Component {
           Filters <i className={this.state.droppedDown ? 'arrow up' : 'arrow down'}></i>
         </button></div>
       </form>
-      <PlayersStatsTable players={this.state.players_stats}/>
+      <PlayersStatsTable categories={this.state.displayed_categories} players={this.state.players_stats}/>
       </div>
     );
   }

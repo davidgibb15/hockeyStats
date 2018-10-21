@@ -3,7 +3,7 @@ import React from "react"
 class PlayersStatsRow extends React.Component {
   render() {
     return(
-      <tr>{Object.values(this.props).map((a, index) => <td key={index}>{a}</td> )}</tr>
+      <tr>{this.props.categories.map((cat) => <td key={cat}>{this.props[cat]}</td> )}</tr>
     );
   }
 }

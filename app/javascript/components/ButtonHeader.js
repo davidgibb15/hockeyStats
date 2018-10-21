@@ -4,7 +4,7 @@ class ButtonHeader extends React.Component {
   render(){
     return (
       <th>
-        <button onClick={() => this.props.onClickFunction(this.props.headerName)}>
+        <button onClick={() => this.props.onClickFunction(this.props.value)}>
           {this.props.headerName}
         </button>
       </th>

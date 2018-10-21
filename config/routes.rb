@@ -3,6 +3,6 @@ Rails.application.routes.draw do
 	get 'players/index'
 	get 'api/v1/players/index'
 	get 'api/v1/search/search'
-	root 'cumulative_games#search'
+	root 'api/v1/search#search'
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 end
