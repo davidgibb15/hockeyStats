@@ -61,6 +61,8 @@ class Api::V1::SearchController < ApplicationController
     end
     num_games = (params.has_key?("num_games") and params["num_games"] != "") ? params["num_games"].to_i : 82
     #filters[:exclude_players] = ignorable
+    puts 'hiiiii'
+    puts filters
     @stats = if (params.has_key?('lookup_type') && params['lookup_type'] == 'Average')
   	  CumulativeGame.get_normalized_average_stats(@categories, @weights, num_games, min_games, filters)
     else

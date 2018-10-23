@@ -10,6 +10,26 @@ class CumulativeGame < ApplicationRecord
   validates_numericality_of :assists, greater_than_or_equal_to: Proc.new {|c_game| c_game.ppa + c_game.sha }
   validate :stats_go_up
 
+  scope :last_n_games, -> (n) do 
+    from_ranked.where('cumulative_games.row_number = ? or cumulative_games.row_number = ?', 1, n) 
+  end
+
+  scope :age_between, -> (min, max) do
+    joins(:player).merge(Player.age_between(min, max))
+  end
+
+  scope :years_in_league_between, -> (min, max) do
+    joins(:player).merge(Player.years_in_league_between(min, max))
+  end
+
+  scope :yahoo_positions, -> (yahoo_positions) do
+    joins(:player).merge(Player.is_at_least_one(yahoo_positions))
+  end
+
+  scope :exclude_players, -> (ids) do
+    where.not(player_id: ids)
+  end
+
 
   def stats_go_up
   	if(gp.present? and gp > 1)
@@ -92,160 +112,35 @@ class CumulativeGame < ApplicationRecord
   	end
   end
 
-  def self.execute_sql(*sql_array)     
-    ActiveRecord::Base.connection.execute(send(:sanitize_sql_array, sql_array))
+  def self.send_chain(methods)
+    methods.inject(self) {|o, args| o.send(*args)}
   end
 
-  def self.calculate_age_date(age)
-    Date.today.years_ago(age)
-  end
-
-  def self.get_games(categories, num_games, filters)
-
-    categories= categories.join(", ")
-    categories << ", player_id, name, gp, yahoo_lw, yahoo_rw, yahoo_c, yahoo_d"
-
-    query_string = 
-      "SELECT goals, assists, shots, blocks, hits, pim, ppp, gwg, plus_minus, player_id, name, gp, yahoo_lw, yahoo_rw, yahoo_c, yahoo_d FROM 
-      (SELECT ROW_NUMBER() 
-        OVER (PARTITION BY player_id 
-          ORDER BY gp DESC) as r, 
-          cumulative_games.*, name, birth_date, yahoo_lw, yahoo_d, yahoo_c, yahoo_rw 
-          FROM cumulative_games 
-          LEFT JOIN players ON players.id = cumulative_games.player_id"
-    args = [] 
-
-    unless filters.empty?
-      query_string = query_string + " WHERE"
-      where_started = false
-
-      if filters.key?(:age)
-        query_string = query_string + "( players.birth_date <= ? AND players.birth_date >= ?)"
-        where_started = true
-        args << calculate_age_date(filters[:age][0])
-        args << calculate_age_date(filters[:age][1]+1)
-      end
-=begin
-      if filters.key?(:date)
-        if where_started
-          query_string = query_string + " AND"
-        end
-        query_string = query_string + "( cumulative_games.date <= '2018-05-05' AND cumulative_games.date >= '2018-01-01')"
-      end
-=end
-      if filters.key?(:include_players)
-        if where_started
-          query_string = query_string + " AND"
-        end
-        query_string = query_string + " ("
-        filters[:include_players].each_with_index do |player_id, i|
-          unless i == 0
-            query_string = query_string + " OR "
-          end
-          query_string = query_string + "cumulative_games.player_id = ?"
-          args << player_id
-        end
-        query_string = query_string + ")"
-        where_started = true
-      elsif filters.key?(:exclude_players)
-        if where_started
-          query_string = query_string + " AND"
-        end
-        query_string = query_string + " ("
-        filters[:exclude_players].each_with_index do |player_id, i|
-          unless i == 0
-            query_string = query_string + " OR "
-          end
-          query_string = query_string + "cumulative_games.player_id != ?"
-          args << player_id
-        end
-        query_string = query_string + ")"
-        where_started = true
-      end
-
-      #if filters.key?("include_teams")
-        #query_string = query_string + ""
-      #end
-
-      if filters.key?(:positions)
-        if where_started
-          query_string = query_string + " AND"
-        end
-        query_string = query_string + " ("
-        filters[:positions].each_with_index do |position, i|
-          unless i == 0
-            query_string = query_string + " OR "
-          end
-          query_string = query_string + "players.position = ?"
-          args << position
-        end
-        query_string = query_string + ")"
-        where_started = true
-      end
-
-      if filters.key?(:years_in_league)
-        if where_started
-          query_string = query_string + " AND"
-        end
-        query_string = query_string + "( players.years_in_league >= ? AND players.years_in_league <= ?)"
-        args << filters[:years_in_league][0]
-        args << filters[:years_in_league][1]
-        where_started = true
-      end
-
-      if filters.key?(:yahoo_positions)
-        if where_started
-          query_string = query_string + " AND"
-        end
-        query_string = query_string + " ("
-        filters[:yahoo_positions].each_with_index do |position, i|
-          unless i == 0
-            query_string = query_string + " OR "
-          end
-          query_string = query_string + "players.yahoo_#{position} = true"
-        end
-        query_string = query_string + ")"
-        where_started = true        
-      end
-
-      if filters.key?(:exclude_players)
-        if where_started
-          query_string = query_string + " AND (players.id NOT IN (?))"
-          args << filters[:exclude_players]
-        end
-
-      end
-    end
-    query_string = query_string + ") x 
-      WHERE x.r =#{num_games+1} 
-      or x.r=1 
-      ORDER BY player_id"
-    execute_sql(query_string, *args)
-  end
-
-  def self.get_games_old(categories, num_games, filters = {})
-  	categories= categories.join(", ")
-    categories << ", player_id, name, gp"
-    #the inner select selects all the stats and name from all players most recent and nth most recent game
-    result=CumulativeGame.execute_sql(
-      "SELECT * FROM 
-        (SELECT 
-          ROW_NUMBER() OVER 
-          (PARTITION BY player_id 
-            ORDER BY gp DESC
-          ) as r, 
-          cumulative_games.*, name 
-          FROM cumulative_games 
-          LEFT JOIN players ON players.id = cumulative_games.player_id
-        ) x 
-      WHERE x.r =11
-      or x.r=1 
-      ORDER BY player_id")
+  def self.from_ranked 
+    from <<-SQL.strip_heredoc 
+    (SELECT *, row_number() OVER ( 
+    PARTITION BY player_id
+    ORDER BY gp DESC
+    ) FROM cumulative_games) AS cumulative_games 
+    SQL
   end 
 
+  def self.get_games(categories, num_games, filters={})
+    filters_as_array = filters.to_a.map { |a| a.flatten }
+    if filters_as_array.length > 0
+      CumulativeGame.select(*categories).last_n_games(82).joins(:player).send_chain(filters_as_array).as_json
+    else
+      CumulativeGame.select(*categories).last_n_games(82).joins(:player).as_json
+    end
+  end
+
   def self.get_raw_range_totals(categories, num_games, filters)
-  	all_games = get_games(categories, num_games, filters).to_a
-  	all_games.to_a.sort_by!{|game| [game["player_id"], game["gp"]]}
+    new_categories = categories
+    new_categories << :name
+    new_categories << :player_id
+    new_categories << :gp
+  	all_games = get_games(categories, num_games, filters)
+  	all_games.sort_by!{|game| [game["player_id"], game["gp"]]}
 
   	all_players_stats_in_range = []
   	previous_game = {"player_id": -1}
@@ -264,6 +159,7 @@ class CumulativeGame < ApplicationRecord
   def self.get_normalized_stats(categories, weights, num_games, min_games, filters)
     puts 'total'
     raw_stats = get_raw_range_totals(categories, num_games, filters)
+    puts raw_stats[0]
     normalized_stats = normalize_stats(raw_stats, categories, weights, num_games)
     add_total_score(normalized_stats, categories)
     normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }

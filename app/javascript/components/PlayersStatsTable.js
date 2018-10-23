@@ -28,6 +28,7 @@ class PlayersStatsTable extends React.Component {
   }
   
   render() {
+    const values = this.props.categories.map(cat => cat.value)
     return(
       <table>
         <thead>
