@@ -60,7 +60,7 @@ class CumulativeGamesController < ApplicationController
       filters[:exclude_players] = params['ignore']['player_id']
     end
     num_games = (params.has_key?("num_games") and params["num_games"] != "") ? params["num_games"].to_i : 82
-    filters[:exclude_players] = ignorable
+    #filters[:exclude_players] = ignorable
     @stats = if (params.has_key?('lookup_type') && params['lookup_type'] == 'Average')
   	  CumulativeGame.get_normalized_average_stats(@categories, @weights, num_games, min_games, filters)
     else
