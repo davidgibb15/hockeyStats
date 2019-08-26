@@ -5,7 +5,7 @@ require 'pry'
 require 'active_record'
 require_relative "../config/environment.rb"
 def get_i_games
-	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=skatersummary&cayenneExp=gameDate>=\"2017-09-09\" and gameDate<=\"2018-10-28\" and gameTypeId=2"
+	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=skatersummary&cayenneExp=gameDate>=\"2018-09-09\" and gameDate<=\"2019-10-28\" and gameTypeId=2"
 	uri = URI(url)
 
 	response = Net::HTTP.get(uri)
@@ -35,7 +35,7 @@ def get_i_games
 		games <<  game
 	end
 
-	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=realtime&cayenneExp=gameDate>=\"2017-09-09\" and gameDate<=\"2018-10-28\" and gameTypeId=2"
+	url = "http://www.nhl.com/stats/rest/skaters?isAggregate=false&reportType=basic&isGame=true&reportName=realtime&cayenneExp=gameDate>=\"2018-09-09\" and gameDate<=\"2019-10-28\" and gameTypeId=2"
 	uri = URI(url)
 	response = Net::HTTP.get(uri)
 	full_games=[]
@@ -63,7 +63,7 @@ def get_i_games
 	response = Net::HTTP.get(uri)
 	full_games = []
 	i = 0
-	JSON.parse(rseponse)['data'].each do |stat_line|
+	JSON.parse(response)['data'].each do |stat_line|
 		game = {}
 		id = stat_line[gameId]
 		playerId = stat_line["playerId"]
@@ -202,7 +202,7 @@ def create_c_games
 		c = CumulativeGame.create(player: Player.find_by(nhl_id: stat_line["nhl_player_id"]), nhl_id: stat_line["nhl_id"], date: stat_line["date"], goals: stat_line["goals"], assists: stat_line["assists"], hits: stat_line["hits"], blocks: stat_line["blocks"], shots: stat_line["shots"], pim: stat_line["pim"], ppg: stat_line["ppg"], ppp: stat_line["ppp"], ppa: stat_line["ppa"], points: stat_line["points"], shg: stat_line["shg"], sha: stat_line["sha"], shp: stat_line["shp"], gwg: stat_line["gwg"], otg: stat_line["otg"], plus_minus: stat_line["plus_minus"], toi: stat_line["toi"], mss: stat_line["mss"], gva: stat_line["gva"], tka: stat_line["tka"], fow: stat_line["fow"], fot: stat_line["fot"], fol: stat_line["fol"], gp: gp)
 	end
 end
-
+get_i_games
 get_players
 create_teams
 create_players
