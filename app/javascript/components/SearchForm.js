@@ -2,6 +2,7 @@ import React from "react"
 import Filters from "./Filters"
 import StatSelect from "./StatsSelect"
 import PlayersStatsTable from "./PlayersStatsTable"
+import axios from 'axios'
 class SearchForm extends React.Component {
   state = {
     filterValue: '',
@@ -38,27 +39,27 @@ class SearchForm extends React.Component {
       {text: 'Rating', value: 'score'}
     ],
     categories: [
-      {value: 'goalsCB', text: 'Goals', weight: 1, checked: true},
-      {value: 'assistsCB', text: 'Assists', weight: 1, checked: true},
-      {value: 'PointsCB', text: 'Points', weight: 1, checked: false},
-      {value: 'SHGCB', text: 'SHGs', weight: 1, checked: false},
-      {value: 'SHACB', text: 'SHAs', weight: 1, checked: false},
-      {value: 'SHPCB', text: 'SHPs', weight: 1, checked: false},
-      {value: 'PPGCB', text: 'PPGs', weight: 1, checked: false},
-      {value: 'PPACB', text: 'PPAs', weight: 1, checked: false},
-      {value: 'PPPCB', text: 'PPPs', weight: 1, checked: true},
-      {value: 'GWGCB', text: 'GWGs', weight: 1, checked: true},
-      {value: 'HitsCB', text: 'Hits', weight: 1, checked: true},
-      {value: 'PIMCB', text: 'PIMs', weight: 1, checked: true},
-      {value: 'BlocksCB', text: 'Blocks', weight: 1, checked: true},
-      {value: 'TakeawaysCB', text: 'Tkwys', weight: 1, checked: false},
-      {value: 'ShotsCB', text: 'Shots', weight: 1, checked: true},
-      {value: 'TOICB', text: 'TOI', weight: 1, checked: false},
-      {value: 'FOWCB', text: 'FOW', weight: 1, checked: false},
-      {value: 'FOLCB', text: 'FOL', weight: 1, checked: false},
+      {value: 'goals', text: 'Goals', weight: 1, checked: true},
+      {value: 'assists', text: 'Assists', weight: 1, checked: true},
+      {value: 'Points', text: 'Points', weight: 1, checked: false},
+      {value: 'shg', text: 'SHGs', weight: 1, checked: false},
+      {value: 'sha', text: 'SHAs', weight: 1, checked: false},
+      {value: 'shp', text: 'SHPs', weight: 1, checked: false},
+      {value: 'ppg', text: 'PPGs', weight: 1, checked: false},
+      {value: 'ppa', text: 'PPAs', weight: 1, checked: false},
+      {value: 'ppp', text: 'PPPs', weight: 1, checked: true},
+      {value: 'gwg', text: 'GWGs', weight: 1, checked: true},
+      {value: 'hits', text: 'Hits', weight: 1, checked: true},
+      {value: 'pim', text: 'PIMs', weight: 1, checked: true},
+      {value: 'blocks', text: 'Blocks', weight: 1, checked: true},
+      {value: 'tka', text: 'Tkwys', weight: 1, checked: false},
+      {value: 'shots', text: 'Shots', weight: 1, checked: true},
+      {value: 'toi', text: 'TOI', weight: 1, checked: false},
+      {value: 'fow', text: 'FOW', weight: 1, checked: false},
+      {value: 'fol', text: 'FOL', weight: 1, checked: false},
       {value: 'FOPCB', text: 'FO%', weight: 1, checked: false},
-      {value: 'PlusMinusCB', text: '+-', weight: 1, checked: false},
-      {value: 'GiveawaysCB', text: 'Gvwys', weight: 1, checked: false},
+      {value: 'plus_minus', text: '+-', weight: 1, checked: false},
+      {value: 'gva', text: 'Gvwys', weight: 1, checked: false},
     ]
   }
   componentDidMount(){
@@ -66,10 +67,6 @@ class SearchForm extends React.Component {
     fetch('api/v1/players/index')
       .then((response) => {return response.json()})
       .then((data) => {this.setState( {filteredUnselectedObjects: data, unselectedObjects: data })});
-
-    fetch('api/v1/search/search')
-      .then((response) => {return response.json()})
-      .then((data) => {this.setState( {players_stats: data})});
   }
   handleDropDownClick = () => {
     this.setState((prevState) => ({
@@ -77,9 +74,21 @@ class SearchForm extends React.Component {
     }));
   }
   handleSearch = () => {
-    fetch('api/v1/search/search?categories[]=goals&categories[]=assists')
-      .then((response) => {return response.json()})
-      .then((data) => {this.setState({players_stats: data})})
+    axios.post('api/v1/search/search',
+    {
+      categories: this.state.categories.filter(category => category.checked).map(
+        category => ({
+          name: category.value,
+          weight: category.weight
+        })
+      ),
+      ageRange: this.state.ageRange,
+      yearsInLeague: this.state.yearsInLeague,
+      filteredPlayers: this.state.selectedObjects
+    }).then(response => {
+      debugger
+      this.setState({players_stats: data})
+    }) 
   }
   filterList = (event) => {
     var updatedList = this.state.unselectedObjects;

@@ -127,18 +127,17 @@ class CumulativeGame < ApplicationRecord
 
   def self.get_games(categories, num_games, filters={})
     filters_as_array = filters.to_a.map { |a| a.flatten }
+
+    fields = categories.map{|category| category[:name]} + [:name, :player_id, :gp]
+    binding.pry
     if filters_as_array.length > 0
-      CumulativeGame.select(*categories).last_n_games(82).joins(:player).send_chain(filters_as_array).as_json
+      CumulativeGame.select(*fields).last_n_games(82).joins(:player).send_chain(filters_as_array).as_json
     else
-      CumulativeGame.select(*categories).last_n_games(82).joins(:player).as_json
+      CumulativeGame.select(*fields).last_n_games(82).joins(:player).as_json
     end
   end
 
   def self.get_raw_range_totals(categories, num_games, filters)
-    new_categories = categories
-    new_categories << :name
-    new_categories << :player_id
-    new_categories << :gp
   	all_games = get_games(categories, num_games, filters)
   	all_games.sort_by!{|game| [game["player_id"], game["gp"]]}
 
@@ -156,24 +155,23 @@ class CumulativeGame < ApplicationRecord
   	all_players_stats_in_range
   end
 
-  def self.get_normalized_stats(categories, weights, num_games, min_games, filters)
+  def self.get_normalized_stats(categories, num_games, min_games, filters)
     puts 'total'
     raw_stats = get_raw_range_totals(categories, num_games, filters)
-    puts raw_stats[0]
-    normalized_stats = normalize_stats(raw_stats, categories, weights, num_games)
-    add_total_score(normalized_stats, categories)
-    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
+    normalized_stats = normalize_stats(raw_stats, categories.map{|c| c[:name]}, categories.map{|c| c[:weight]}, num_games)
+    add_total_score(normalized_stats, categories.map{|c| c[:name]})
+    normalized_stats.sort_by!{ |stat_line| - stat_line["score"] }
     serialize_positions(normalized_stats)
   end
 
-  def self.get_normalized_average_stats(categories, weights, num_games, min_games, filters)
+  def self.get_normalized_average_stats(categories, num_games, min_games, filters)
     puts 'average'
     raw_stats = get_raw_range_totals(categories, num_games, filters)
     filter_out_low_games_player(raw_stats, min_games)
-    average_stats(raw_stats, categories)
-    normalized_stats = normalize_stats(raw_stats, categories, weights)
-    add_total_score(normalized_stats, categories)
-    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
+    average_stats(raw_stats, categories.map{|c| c[:name]})
+    normalized_stats = normalize_stats(raw_stats, categories.map{|c| c[:name]}, categories.map{|c| c[:weight]})
+    add_total_score(normalized_stats, categories.map{|c| c[:name]})
+    normalized_stats.sort_by!{ |stat_line| - stat_line["score"] }
     serialize_positions(normalized_stats)
   end
 
@@ -220,7 +218,8 @@ class CumulativeGame < ApplicationRecord
     raw_stats.each do |stat_line|
       present_normalizable_categories.each do |category|
         stat_line[category] = (stat_line[category].to_f - MINS[category]*num_games)/((MAXES[category]-MINS[category])*num_games)
-        stat_line[category] = stat_line[category] * weights[category]
+        # stat_line[category] = stat_line[category] * weights[category]
+        stat_line[category] = stat_line[category] * 1
       end
     end
   end
