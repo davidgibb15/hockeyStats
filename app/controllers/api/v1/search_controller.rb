@@ -1,77 +1,30 @@
 class Api::V1::SearchController < ApplicationController
+  protect_from_forgery with: :null_session
   def search
-  	category_to_placement= {"goals": 0, "assists": 1, }
-  	@categories = params["categories"]
-  	if @categories.nil? || @categories.length == 0
-  		@categories = ["goals", "assists", "shots", "blocks", "hits", "pim", "ppp", "gwg", "plus_minus"]
-  	end
-  	@weights = weights_hash
-  	
-  	min_games = 5
-
-    filters = {}
-    unless (params["data1"].nil? or params["data2"].nil?) or (params["data1"] == "" and params["data2"] == "")
-      min_age = 
-        if params["data1"] == ""
-          18
-        else
-          params["data1"].to_i
-        end
-      max_age = 
-        if params["data2"] == ""
-          50
-        else
-          params["data2"].to_i
-        end
-      filters[:age] = [min_age, max_age]
-    end
-
-    unless (params["data3"].nil? or params["data4"].nil?) or (params["data3"] == "" and params["data4"] == "")
-      min_years = 
-        if params["data3"] == ""
-          0
-        else
-          params["data3"].to_i
-        end
-      max_years = 
-        if params["data4"] == ""
-          27
-        else
-          params["data4"].to_i
-        end
-      filters[:years_in_league] = [min_years, max_years]
-    end
-
-    unless params["positions"].nil?
-      filters[:positions] = []
-      params["positions"].each do |position|
-        filters[:positions] << position
-      end
-    end
-
-    unless params["yahoo_positions"].nil?
-      filters[:yahoo_positions] = []
-      params["yahoo_positions"].each do |position|
-        filters[:yahoo_positions] << position.downcase
-      end
-    end
-    if params['ignore'] && params['ignore']['player_id'].length > 1
-      params['ignore']['player_id'].delete_at(0)
-      filters[:exclude_players] = params['ignore']['player_id']
-    end
-    num_games = (params.has_key?("num_games") and params["num_games"] != "") ? params["num_games"].to_i : 82
-    #filters[:exclude_players] = ignorable
-    puts 'hiiiii'
-    puts filters
-    @stats = if (params.has_key?('lookup_type') && params['lookup_type'] == 'Average')
-  	  CumulativeGame.get_normalized_average_stats(@categories, @weights, num_games, min_games, filters)
+    post_body = JSON.parse(request.raw_post)
+    categories = post_body["categories"].keys
+    weights = post_body["categories"]
+    filters = post_body["filters"]
+    filters['yahoo_positions'] = map_positions_to_yahoo(filters['yahoo_positions'])
+    num_games = post_body["num_games"]
+    min_games = post_body["min_games"].to_i
+=begin
+    @stats = if post_body["average"]
+      CumulativeGame.get_normalized_average_stats(categories, weights, num_games, min_games, filters)
     else
-      CumulativeGame.get_normalized_stats(@categories, @weights, num_games, min_games, filters)
+      CumulativeGame.get_normalized_stats(categories, weights, num_games, min_games, filters)
     end
+=end
+    num_games = 83
+    @stats = CumulativeGame.get_stats_points(categories, weights, num_games, min_games, filters)
     render json: @stats
   end
 
   private
+
+  def map_positions_to_yahoo(positions)
+    yahoo_positions = positions.map { |position| "yahoo_#{position.downcase}"}
+  end
 
   def get_category_weight_placement(category)
   	cats = ["goals", "assists", "points", "shots", "blocks", "hits", "pim", "ppg", "ppa", "ppp", "shg", "sha", "shp","gwg", "plus_minus", "toi", "fow", "fol", "fot", "gva", "tka"]

@@ -8,16 +8,12 @@ class SearchForm extends React.Component {
     droppedDown: false,
     ageRange: [18,50],
     yearsInLeague: [0, 25],
-    positions: {
-      c: true,
-      rw: true,
-      lw: true,
-      d: true,
-    },
+    minGames: 5,
     filteredUnselectedObjects: [],
+    filteredSelectedObjects: [],
     unselectedObjects: [],
     selectedObjects: [],
-    players_stats: this.props.stats,
+    players_stats: [],
     positions:[
       {name: 'C', checked: true},
       {name: 'LW', checked: true},
@@ -38,38 +34,97 @@ class SearchForm extends React.Component {
       {text: 'Rating', value: 'score'}
     ],
     categories: [
-      {value: 'goalsCB', text: 'Goals', weight: 1, checked: true},
-      {value: 'assistsCB', text: 'Assists', weight: 1, checked: true},
-      {value: 'PointsCB', text: 'Points', weight: 1, checked: false},
-      {value: 'SHGCB', text: 'SHGs', weight: 1, checked: false},
-      {value: 'SHACB', text: 'SHAs', weight: 1, checked: false},
-      {value: 'SHPCB', text: 'SHPs', weight: 1, checked: false},
-      {value: 'PPGCB', text: 'PPGs', weight: 1, checked: false},
-      {value: 'PPACB', text: 'PPAs', weight: 1, checked: false},
-      {value: 'PPPCB', text: 'PPPs', weight: 1, checked: true},
-      {value: 'GWGCB', text: 'GWGs', weight: 1, checked: true},
-      {value: 'HitsCB', text: 'Hits', weight: 1, checked: true},
-      {value: 'PIMCB', text: 'PIMs', weight: 1, checked: true},
-      {value: 'BlocksCB', text: 'Blocks', weight: 1, checked: true},
-      {value: 'TakeawaysCB', text: 'Tkwys', weight: 1, checked: false},
-      {value: 'ShotsCB', text: 'Shots', weight: 1, checked: true},
-      {value: 'TOICB', text: 'TOI', weight: 1, checked: false},
-      {value: 'FOWCB', text: 'FOW', weight: 1, checked: false},
-      {value: 'FOLCB', text: 'FOL', weight: 1, checked: false},
-      {value: 'FOPCB', text: 'FO%', weight: 1, checked: false},
-      {value: 'PlusMinusCB', text: '+-', weight: 1, checked: false},
-      {value: 'GiveawaysCB', text: 'Gvwys', weight: 1, checked: false},
+      {value: 'goals', text: 'Goals', weight: 1, checked: true},
+      {value: 'assists', text: 'Assists', weight: 1, checked: true},
+      {value: 'Points', text: 'Points', weight: 1, checked: false},
+      {value: 'shg', text: 'SHGs', weight: 1, checked: false},
+      {value: 'sha', text: 'SHAs', weight: 1, checked: false},
+      {value: 'shp', text: 'SHPs', weight: 1, checked: false},
+      {value: 'ppg', text: 'PPGs', weight: 1, checked: false},
+      {value: 'ppa', text: 'PPAs', weight: 1, checked: false},
+      {value: 'ppp', text: 'PPPs', weight: 1, checked: true},
+      {value: 'gwg', text: 'GWGs', weight: 1, checked: true},
+      {value: 'hits', text: 'Hits', weight: 1, checked: true},
+      {value: 'pim', text: 'PIMs', weight: 1, checked: true},
+      {value: 'blocks', text: 'Blocks', weight: 1, checked: true},
+      {value: 'tka', text: 'Tkwys', weight: 1, checked: false},
+      {value: 'shots', text: 'Shots', weight: 1, checked: true},
+      {value: 'toi', text: 'TOI', weight: 1, checked: false},
+      {value: 'fow', text: 'FOW', weight: 1, checked: false},
+      {value: 'fol', text: 'FOL', weight: 1, checked: false},
+      {value: 'FOPC', text: 'FO%', weight: 1, checked: false},
+      {value: 'plus_minus', text: '+-', weight: 1, checked: false},
+      {value: 'gva', text: 'Gvwys', weight: 1, checked: false},
     ]
   }
   componentDidMount(){
-    console.log('hi')
     fetch('api/v1/players/index')
       .then((response) => {return response.json()})
       .then((data) => {this.setState( {filteredUnselectedObjects: data, unselectedObjects: data })});
+    this.requestStats()
+    
+  }
+  requestStats = () => {
+    var displayed_cats = [{text: 'Name', value: 'name'}]
+    var length = this.state.categories.length;
+    for (var i = 0; i < length; i++) {
+      if (this.state.categories[i].checked) {
+        displayed_cats.push({value: this.state.categories[i].value, text: this.state.categories[i].text})
+      }
+    }
+    displayed_cats.push({text: 'Rating', value: 'score'})
+    fetch('search', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(this.getRequestBody()),
+    }).then((response) => {return response.json()})
+      .then((data) => {
+        this.setState( {
+          players_stats: data,
+          displayed_categories: displayed_cats
+        })
+      });    
+  }
+  getRequestBody = () => {
+    var categories = {}
+    var arrayLength = this.state.categories.length;
+    for (var i = 0; i < arrayLength; i++) {
+      if (this.state.categories[i].checked) {
+        categories[this.state.categories[i].value] = parseInt(this.state.categories[i].weight)
+      }
+    }
+    var yahoo_positions=[]
+    var arrayLength = this.state.positions.length
+    for (var i = 0; i < arrayLength; i++) {
+      if (this.state.positions[i].checked) {
+        yahoo_positions.push(this.state.positions[i].name)
+      }
+    }
+    var excluded_players=[]
+    var arrayLength = this.state.selectedObjects.length
+    for (var i = 0; i<arrayLength; i++) {
+      excluded_players.push(this.state.selectedObjects[i].id)
+    }
+    var filters = {
+      'age_between': [parseInt(this.state.ageRange[0]),parseInt(this.state.ageRange[1])],
+      'years_in_league_between': [parseInt(this.state.yearsInLeague[0]), parseInt(this.state.yearsInLeague[1])],
+      'yahoo_positions': yahoo_positions,
+      'exclude_players': excluded_players
+    }
+    var average = 'true'
+    var num_games = 82
 
-    fetch('api/v1/search/search')
-      .then((response) => {return response.json()})
-      .then((data) => {this.setState( {players_stats: data})});
+
+    return {
+      categories: categories,
+      filters: filters,
+      average: average,
+      num_games: num_games,
+      min_games: this.state.minGames
+    }
   }
   handleDropDownClick = () => {
     this.setState((prevState) => ({
@@ -77,55 +132,69 @@ class SearchForm extends React.Component {
     }));
   }
   handleSearch = () => {
-    fetch('api/v1/search/search?categories[]=goals&categories[]=assists')
-      .then((response) => {return response.json()})
-      .then((data) => {this.setState({players_stats: data})})
+    this.requestStats()
   }
   filterList = (event) => {
-    var updatedList = this.state.unselectedObjects;
-    updatedList = updatedList.filter(function(item){
+    var updatedUnselectedList = this.state.unselectedObjects;
+    updatedUnselectedList = updatedUnselectedList.filter(function(item){
       return item.name.toLowerCase().search(
       event.target.value.toLowerCase()) !== -1;
     });
+
+    var updatedSelectedList = this.state.selectedObjects;
+    updatedSelectedList = updatedSelectedList.filter(function(item){
+      return item.name.toLowerCase().search(
+      event.target.value.toLowerCase()) !== -1;
+    });
+
     this.setState({
-      filteredUnselectedObjects: updatedList,
+      filteredUnselectedObjects: updatedUnselectedList,
+      filteredSelectedObjects: updatedSelectedList,
       filterValue: event.target.value
     })
   }
+
   handleSelect = (index) => {
     var obj = this.state.filteredUnselectedObjects[index]
     var newSelected = this.state.selectedObjects.slice()
     newSelected.push(obj)
-    
+
+    var newFilteredSelected = this.state.filteredSelectedObjects.slice()
+    newFilteredSelected.push(obj)
+
     var newUnselected = this.state.unselectedObjects.slice()
     var originalIndex = newUnselected.indexOf(obj);
     newUnselected.splice(originalIndex, 1)
-    
     var newFilteredUnselected = this.state.filteredUnselectedObjects.slice()
     newFilteredUnselected.splice(index, 1)
   
     this.setState({
       selectedObjects: newSelected,
       unselectedObjects: newUnselected,
-      filteredUnselectedObjects: newFilteredUnselected
+      filteredUnselectedObjects: newFilteredUnselected,
+      filteredSelectedObjects: newFilteredSelected
     });
   }
   
   handleUnselect = (index) => {
-    var obj = this.state.selectedObjects[index]
+    var obj = this.state.filteredSelectedObjects[index]
     var newUnselected = this.state.unselectedObjects.slice()
     newUnselected.push(obj)
+
     var newFilteredUnselected = this.state.filteredUnselectedObjects.slice()
-    if(obj.name.toLowerCase().search(this.state.filterValue.toLowerCase()) !== -1)
-    {
-      newFilteredUnselected.push(obj)
-    }
+    newFilteredUnselected.push(obj)
+
     var newSelected = this.state.selectedObjects.slice()
-    newSelected.splice(index, 1)
+    var originalIndex = newSelected.indexOf(obj);
+    newSelected.splice(originalIndex, 1)
+    var newFilteredSelected = this.state.filteredSelectedObjects.slice()
+    newFilteredSelected.splice(index, 1)
+  
     this.setState({
-      unselectedObjects: newUnselected,
       selectedObjects: newSelected,
-      filteredUnselectedObjects: newFilteredUnselected
+      unselectedObjects: newUnselected,
+      filteredUnselectedObjects: newFilteredUnselected,
+      filteredSelectedObjects: newFilteredSelected
     });
   }
   
@@ -160,6 +229,9 @@ class SearchForm extends React.Component {
     rangesNew[index]= event.target.value
     this.setState({ [stateName]: rangesNew }); 
   }
+  handleMinGamesChange = (event) => {
+    this.setState({minGames: event.target.value});
+  }
   array_chunk= (arr, size) => {
     var result = [];
     for (var i = 0; i < arr.length; i += size) {
@@ -178,7 +250,7 @@ class SearchForm extends React.Component {
           type='button'
           onClick = {this.handleSearch}
           className="dropdown">
-          press me!
+          Search
         </button>
         <div className="stat-select">
           {rows.map((row, i) => (
@@ -206,13 +278,17 @@ class SearchForm extends React.Component {
             handleSelect = {this.handleSelect}
             filterList = {this.filterList}
             unselectedObjects = {this.state.filteredUnselectedObjects}
-            selectedObjects = {this.state.selectedObjects}
+            selectedObjects = {this.state.filteredSelectedObjects}
             filterValue = {this.state.filterValue}
             positions = {this.state.positions}
             handlePositionChange = {this.handlePositionChange}
             ageRange = {this.state.ageRange}
             handleRangeChange = {this.handleRangeChange}
             yearsInLeague = {this.state.yearsInLeague}
+            numIncluded = {this.state.unselectedObjects.length}
+            numExcluded = {this.state.selectedObjects.length}
+            minGames = {this.state.minGames}
+            handleMinGamesChange = {this.handleMinGamesChange}
           />
         </div>
         <div>
@@ -223,21 +299,11 @@ class SearchForm extends React.Component {
           Filters <i className={this.state.droppedDown ? 'arrow up' : 'arrow down'}></i>
         </button></div>
       </form>
+
       <PlayersStatsTable categories={this.state.displayed_categories} players={this.state.players_stats}/>
       </div>
     );
   }
 }
-
-const PLAYERS_STATS2 = [
-  {name: 'charlie2', goals2: '4', assists2: '5', id: 324},
-  {name: 'eleri2', goals2: '324', assists2: '4', id: 223},
-  {name: 'david2', goals2: '243', assists2: '2', id: 3423}
-];
-const PLAYERS = [
-  {name: 'charlie', goals: '2', assists: '5', id: 1},
-  {name: 'eleri', goals: '5', assists: '4', id: 2},
-  {name: 'david', goals: '4', assists: '2', id: 3}
-];
 
 export default SearchForm

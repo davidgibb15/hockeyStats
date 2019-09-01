@@ -10,8 +10,8 @@ class CumulativeGame < ApplicationRecord
   validates_numericality_of :assists, greater_than_or_equal_to: Proc.new {|c_game| c_game.ppa + c_game.sha }
   validate :stats_go_up
 
-  scope :last_n_games, -> (n) do 
-    from_ranked.where('cumulative_games.row_number = ? or cumulative_games.row_number = ?', 1, n) 
+  scope :last_n_games, -> (n) do
+    from_ranked.where('cumulative_games.row_number = ? or cumulative_games.row_number = ?', 1, (n+1)) 
   end
 
   scope :age_between, -> (min, max) do
@@ -22,11 +22,11 @@ class CumulativeGame < ApplicationRecord
     joins(:player).merge(Player.years_in_league_between(min, max))
   end
 
-  scope :yahoo_positions, -> (yahoo_positions) do
-    joins(:player).merge(Player.is_at_least_one(yahoo_positions))
+  scope :yahoo_positions, -> (*yahoo_positions) do
+    joins(:player).merge(Player.is_at_least_one(*yahoo_positions))
   end
 
-  scope :exclude_players, -> (ids) do
+  scope :exclude_players, -> (*ids) do
     where.not(player_id: ids)
   end
 
@@ -125,6 +125,34 @@ class CumulativeGame < ApplicationRecord
     SQL
   end 
 
+  def self.get_normalized_stats(categories, weights, num_games, min_games, filters)
+    raw_stats = get_raw_range_totals(categories, num_games, filters)
+    normalized_stats = normalize_stats(raw_stats, categories, weights, num_games)
+    add_total_score(normalized_stats, categories)
+    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
+    serialize_positions(normalized_stats)
+  end
+
+  def self.get_normalized_average_stats(categories, weights, num_games, min_games, filters)
+    raw_stats = get_raw_range_totals(categories, num_games, filters)
+    filter_out_low_games_player(raw_stats, min_games)
+    average_stats(raw_stats, categories)
+    normalized_stats = normalize_stats(raw_stats, categories, weights)
+    add_total_score(normalized_stats, categories)
+    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
+    serialize_positions(normalized_stats)
+  end
+
+  def self.get_stats_points(categories, weights, num_games, min_games, filters)
+    raw_stats = get_raw_range_totals(categories, num_games, filters)
+    filter_out_low_games_player(raw_stats, min_games)
+    pointerized_stats = convert_totals_to_point_totals(raw_stats, categories, weights)
+    add_total_score(pointerized_stats, categories)
+    pointerized_stats.sort_by!{ |stat_line| -stat_line["score"] }
+    serialize_positions(pointerized_stats)
+  end
+  private
+
   def self.get_games(categories, num_games, filters={})
     filters_as_array = filters.to_a.map { |a| a.flatten }
     if filters_as_array.length > 0
@@ -135,49 +163,24 @@ class CumulativeGame < ApplicationRecord
   end
 
   def self.get_raw_range_totals(categories, num_games, filters)
-    new_categories = categories
-    new_categories << :name
-    new_categories << :player_id
-    new_categories << :gp
-  	all_games = get_games(categories, num_games, filters)
-  	all_games.sort_by!{|game| [game["player_id"], game["gp"]]}
+    categories_to_select = categories + [:name, :player_id, :gp]
+    all_games = get_games(categories_to_select, num_games, filters)
+    all_games.sort_by!{|game| [game["player_id"], game["gp"]]}
 
-  	all_players_stats_in_range = []
-  	previous_game = {"player_id": -1}
-  	all_games.each_with_index do |game, i|
+    all_players_stats_in_range = []
+    previous_game = {"player_id": -1}
+    all_games.each_with_index do |game, i|
 
-  		if game["player_id"] == previous_game["player_id"]
-  			all_players_stats_in_range << calculate_range_stats(previous_game, game, categories)
-  		elsif i == all_games.length - 1 || game["player_id"] != all_games[i+1]["player_id"]
-  			all_players_stats_in_range << game
-  		end
-  		previous_game = game
-  	end
-  	all_players_stats_in_range
+      if game["player_id"] == previous_game["player_id"]
+        all_players_stats_in_range << calculate_range_stats(previous_game, game, categories)
+      elsif i == all_games.length - 1 || game["player_id"] != all_games[i+1]["player_id"]
+        all_players_stats_in_range << game
+      end
+      previous_game = game
+    end
+    all_players_stats_in_range
   end
 
-  def self.get_normalized_stats(categories, weights, num_games, min_games, filters)
-    puts 'total'
-    raw_stats = get_raw_range_totals(categories, num_games, filters)
-    puts raw_stats[0]
-    normalized_stats = normalize_stats(raw_stats, categories, weights, num_games)
-    add_total_score(normalized_stats, categories)
-    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
-    serialize_positions(normalized_stats)
-  end
-
-  def self.get_normalized_average_stats(categories, weights, num_games, min_games, filters)
-    puts 'average'
-    raw_stats = get_raw_range_totals(categories, num_games, filters)
-    filter_out_low_games_player(raw_stats, min_games)
-    average_stats(raw_stats, categories)
-    normalized_stats = normalize_stats(raw_stats, categories, weights)
-    add_total_score(normalized_stats, categories)
-    normalized_stats.sort_by!{ |stat_line| -stat_line["score"] }
-    serialize_positions(normalized_stats)
-  end
-
-  private
   def self.serialize_positions(stats)
     stats.each do |player|
       position_string=""
@@ -191,6 +194,16 @@ class CumulativeGame < ApplicationRecord
   end
   def self.filter_out_low_games_player(stats, min_games)
     stats.reject!{ |k| k["gp"] < min_games}
+  end
+
+  def self.convert_totals_to_point_totals(raw_stats, queried_categories, weights)
+    valid_points_categories = ["goals", "assists", "points", "hits", "blocks", "shots", "pim", "ppg", "ppa","ppp", "shg", "sha","shp", "gwg", "otg", "toi", "mss","gva", "tka", "fow", "fot", "fol", "plus_minus"]
+    present_points_categories = valid_points_categories & queried_categories
+    raw_stats.each do |stat_line|
+      present_points_categories.each do |category|
+        stat_line[category] = stat_line[category] * weights[category]
+      end
+    end
   end
 
   def self.calculate_range_stats(cumulative_total_beginning, cumulative_total_end, queried_categories)

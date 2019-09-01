@@ -84,8 +84,8 @@ class CumulativeGamesController < ApplicationController
 	  	end.to_h
 	else
 		weights = @categories.map do |category|
-	  	 	[category, 1]
-	  	end.to_h		
+	  	[category, 1]
+	  end.to_h		
 	end
 	weights
   end

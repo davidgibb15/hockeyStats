@@ -37,19 +37,17 @@ div.statContainer{
   width: 150px;
   background-color: lavender;
   margin-bottom: 2px;
-   
 }
 .multiselect-container{
   width: 50%;
+  float: left;
+}
+.sub-filters{
+  width: 50%;
   float: right;
 }
-.filters{
-  width: 50%;
-  float: left
-}
 .filters-container{
-  
-  width: 600px;
+  width: 1000px;
   margin: 0 auto;
 }
 .statColumn{
@@ -81,7 +79,6 @@ div.statContainer{
   font-weight: 800;
 }
 button.dropdown{
-  background-color: blue;
   border: 1px solid;
   padding: 4px 6px 4px 6px;
   
@@ -116,10 +113,49 @@ i.arrow.up{
   list-style: none;
 }
 .selected-wrapper{
-  width: 50%;
-  float: right;
+  border: 1px solid;
+  display: inline-block;
+  vertical-align: top;
 }
 .unselected-wrapper{
-  width: 50%;
-  float: left
+  border: 1px solid;
+  display: inline-block;
+  vertical-align: top;
+}
+.selected-wrapper ul{
+  max-height: 250px;
+  padding:3px; 
+  overflow:auto
+
+}
+.unselected-wrapper ul{
+  max-height: 250px;
+  padding:3px; 
+  overflow:auto
+}
+
+.unselected-wrapper li{
+  background-color: lightgrey;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  padding: 2px;
+}
+.unselected-wrapper li::after{
+  content: ">";
+  text-align: right;
+  float: right;
+}
+.selected-wrapper li{
+  background-color: lightgrey;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  padding: 2px;
+}
+.selected-wrapper li::before{
+  content: "<";
+  text-align: left;
+  float: left;
+}
+.hidden{
+  display: none;
 }

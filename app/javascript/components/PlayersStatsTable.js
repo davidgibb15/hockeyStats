@@ -28,15 +28,23 @@ class PlayersStatsTable extends React.Component {
   }
   
   render() {
-    const values = this.props.categories.map(cat => cat.value)
-    return(
-      <table>
-        <thead>
-          <PlayerHeadersRow categories={this.props.categories} headerNames= {Object.keys(this.state.data[0])} onClickFunction={this.handleClick}/>
-        </thead>
-        <tbody>{this.state.data.map(player => <PlayersStatsRow key={player.name} {...player} categories={values} />)}</tbody>    
-      </table>
-    );
+    if (this.state.data.length == 0) {
+      return (
+        <div>
+          Please fill out form and click search
+        </div>
+      )
+    } else {
+      const values = this.props.categories.map(cat => cat.value)
+      return(
+        <table>
+          <thead>
+            <PlayerHeadersRow categories={this.props.categories} headerNames= {Object.keys(this.state.data[0])} onClickFunction={this.handleClick}/>
+          </thead>
+          <tbody>{this.state.data.map(player => <PlayersStatsRow key={player.player_id} {...player} categories={values} />)}</tbody>    
+        </table>
+      );
+    }
   }
 }
 

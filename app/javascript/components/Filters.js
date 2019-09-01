@@ -9,20 +9,23 @@ class Filters extends React.Component {
   handleRangeChange = (index, name) => event => {
     this.props.handleRangeChange(event, index, name)
   }
+
   render() {
     return (
       <div className="filters-container">
         <div className="multiselect-container">
-           <DoubleMultiSelect 
-              handleUnselect = {this.props.handleUnselect}
-              handleSelect = {this.props.handleSelect}
-              filterList = {this.props.filterList}
-              unselectedObjects = {this.props.unselectedObjects}
-              selectedObjects = {this.props.selectedObjects}
-              filterValue = {this.props.filterValue}
-            />
-          </div>
-          <div className="filters">
+          <DoubleMultiSelect 
+            handleUnselect = {this.props.handleUnselect}
+            handleSelect = {this.props.handleSelect}
+            filterList = {this.props.filterList}
+            unselectedObjects = {this.props.unselectedObjects}
+            selectedObjects = {this.props.selectedObjects}
+            filterValue = {this.props.filterValue}
+            numIncluded = {this.props.numIncluded}
+            numExcluded = {this.props.numExcluded}
+          />
+        </div>
+        <div className="sub-filters">
           {
             this.props.positions.map((position, index) => (
               <span key={index}>
@@ -40,13 +43,13 @@ class Filters extends React.Component {
             Ages
             <input type="number"
               value={this.props.ageRange[0]}
-              name="min"
+              name="minimum-age"
               onChange={this.handleRangeChange(0, 'ageRange')}
             />
             -
             <input type="number"
               value={this.props.ageRange[1]}
-              name="min"
+              name="maximim-age"
               onChange={this.handleRangeChange(1, 'ageRange')}
             />
           </div>
@@ -54,14 +57,22 @@ class Filters extends React.Component {
           Years In League 
           <input type="number"
             value={this.props.yearsInLeague[0]}
-            name="min"
+            name="minimum-years"
             onChange={this.handleRangeChange(0, 'yearsInLeague')}
           />
           -
           <input type="number"
             value={this.props.yearsInLeague[1]}
-            name="min"
+            name="maximum-years"
             onChange={this.handleRangeChange(1, 'yearsInLeague')}
+          />
+        </div>
+        <div className="min-games">
+          Minimum Games
+          <input type="number"
+            value={this.props.minGames}
+            name="minimum-games"
+            onChange={this.props.handleMinGamesChange}
           />
         </div>
       </div>
